@@ -1,5 +1,6 @@
 import { once } from "node:events";
 import net, { type AddressInfo } from "node:net";
+import { CreateTableCommand, DescribeTableCommand, DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { closeDbClients, createHealthCheck } from "../../src/index.js";
 
 // Ports from compose.yaml, which CI mirrors.
@@ -104,6 +105,78 @@ describe.each([
     expect(status).toBe(503);
     expect(took).toBeLessThan(6000);
     expect(leftover).toBeLessThanOrEqual(0);
+  });
+});
+
+describe("dynamodb against dynamodb-local", () => {
+  const TABLE = "allgood_integration";
+  const saved = { ...process.env };
+  const endpoint = (url: string) => {
+    process.env.AWS_ENDPOINT_URL_DYNAMODB = url;
+  };
+
+  beforeAll(async () => {
+    Object.assign(process.env, {
+      AWS_REGION: "us-east-1",
+      AWS_ACCESS_KEY_ID: "local",
+      AWS_SECRET_ACCESS_KEY: "local",
+    });
+    endpoint("http://localhost:8009");
+    const client = new DynamoDBClient({});
+    try {
+      await client.send(
+        new CreateTableCommand({
+          TableName: TABLE,
+          BillingMode: "PAY_PER_REQUEST",
+          AttributeDefinitions: [{ AttributeName: "id", AttributeType: "S" }],
+          KeySchema: [{ AttributeName: "id", KeyType: "HASH" }],
+        }),
+      );
+      for (;;) {
+        const { Table } = await client.send(new DescribeTableCommand({ TableName: TABLE }));
+        if (Table?.TableStatus === "ACTIVE") break;
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+    } finally {
+      client.destroy();
+    }
+  });
+
+  afterAll(() => {
+    for (const key of ["AWS_REGION", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_ENDPOINT_URL_DYNAMODB"]) {
+      if (saved[key] === undefined) delete process.env[key];
+      else process.env[key] = saved[key];
+    }
+  });
+
+  it("passes for an existing table", async () => {
+    const { status, body } = await check({ dynamodb_table: TABLE, ...only({ dynamodb: true }) });
+
+    expect(status).toBe(200);
+    expect(body.results.dynamodb).toMatchObject({ status: "pass", message: "DynamoDB table is active" });
+  });
+
+  it("fails with a 503 for a missing table", async () => {
+    const { status, body } = await check({ dynamodb_table: "missing_table", ...only({ dynamodb: true }) });
+
+    expect(status).toBe(503);
+    expect(body.results.dynamodb.status).toBe("fail");
+  });
+
+  it("fails inside 6s with value timeout when the endpoint never replies", async () => {
+    const silent = net.createServer((s) => s.resume()).listen(0, "127.0.0.1");
+    await once(silent, "listening");
+    endpoint(`http://127.0.0.1:${(silent.address() as AddressInfo).port}`);
+
+    const started = Date.now();
+    const { status, body } = await check({ dynamodb_table: TABLE, ...only({ dynamodb: true }) });
+    const took = Date.now() - started;
+    silent.close();
+    endpoint("http://localhost:8009");
+
+    expect(status).toBe(503);
+    expect(body.results.dynamodb.value).toBe("timeout");
+    expect(took).toBeLessThan(6000);
   });
 });
 
