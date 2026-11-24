@@ -7,6 +7,11 @@ export default {
   moduleNameMapper: {
     "^(\\.{1,2}/.*)\\.js$": "$1",
   },
+  // v8, not babel-istanbul: istanbul's test-exclude breaks under the minimatch override.
+  coverageProvider: "v8",
+  collectCoverageFrom: ["src/**/*.ts", "!src/**/*.test.ts", "!src/checks/types.ts"],
+  coverageReporters: ["text", "json-summary"],
+  coverageThreshold: { global: { lines: 75 } },
   extensionsToTreatAsEsm: [".ts"],
   transform: {
     "^.+\\.tsx?$": [
