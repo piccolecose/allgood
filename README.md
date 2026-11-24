@@ -205,7 +205,7 @@ curl -H "x-allgood-secret: $HEALTHCHECK_SECRET" https://example.com/healthcheck
 ```
 
 ## Connections
-A database that does not hand over a connection within 5 seconds fails the check with the value `timeout`, so you can tell a slow database from one that refused the connection.
+A database or cache that does not answer within 5 seconds fails its check with the value `timeout`, so you can tell a slow server from one that refused the connection.
 
 The database check keeps one single-connection pool per connection string for the life of the process, rather than opening a new one per request. The Redis check opens a connection per check and always closes it. To close the database pools on shutdown:
 

@@ -78,6 +78,7 @@ export const GET = ({ request }) => healthCheck(request); // SvelteKit
 |---|---|---|---|
 | `db_connection` | string | — | Database URL. `postgres://`, `postgresql://`, `mysql://` or `mariadb://`. Required when `checks.db_connection` is on |
 | `cache_connection` | string | — | `redis://…` or `memcached://…`. Required when `checks.cache_connection` is on |
+| `secret` | string | — | When set, CPU, memory and disk values show as `hidden` unless the request sends it in the `x-allgood-secret` header. Statuses always show |
 | `checks.db_connection` | boolean | `false` | Runs `SELECT 1` |
 | `checks.cache_connection` | boolean | `false` | Redis `PING`, or memcached `version` |
 | `checks.disk_space` | boolean | `true` | Fails under 1 GB free |
@@ -85,6 +86,8 @@ export const GET = ({ request }) => healthCheck(request); // SvelteKit
 | `checks.cpu_usage` | boolean | `true` | Fails above 80%. Takes about a second to sample |
 | `checks.outbound_internet` | boolean | `true` | Fetches https://1.1.1.1, then https://8.8.8.8 |
 | `checks.db_migrations` | boolean | `false` | Reserved; not implemented yet |
+
+A database or cache check that gets no answer within 5 seconds fails with the value `timeout`; a refused connection fails with `false`.
 
 Only turn on checks for things the app actually depends on. If the app has no Redis, leave `cache_connection` off — an enabled check with no connection string fails.
 

@@ -14,21 +14,23 @@ const TIMEOUT_MS = 5000;
  * health check needs one round trip; the idle timeout covers connecting and
  * waiting, and every path destroys the socket.
  */
-const checkMemcached = (connection: string): Promise<boolean> => {
+type Outcome = "true" | "false" | "timeout";
+
+const checkMemcached = (connection: string): Promise<Outcome> => {
   const { hostname, port } = new URL(connection);
   return new Promise((resolve) => {
     const socket = net.connect({ host: hostname.replace(/^\[|\]$/g, ""), port: Number(port) || 11211 });
-    const done = (ok: boolean) => {
+    const done = (outcome: Outcome) => {
       socket.destroy();
-      resolve(ok);
+      resolve(outcome);
     };
     let reply = "";
-    socket.setTimeout(TIMEOUT_MS, () => done(false));
-    socket.on("error", () => done(false));
+    socket.setTimeout(TIMEOUT_MS, () => done("timeout"));
+    socket.on("error", () => done("false"));
     socket.on("connect", () => socket.write("version\r\n"));
     socket.on("data", (chunk) => {
       reply += chunk;
-      if (reply.includes("\r\n")) done(reply.startsWith("VERSION "));
+      if (reply.includes("\r\n")) done(reply.startsWith("VERSION ") ? "true" : "false");
     });
   });
 };
@@ -58,7 +60,7 @@ const within = async <T>(ms: number, promise: Promise<T>): Promise<T> => {
  * deadline around the whole exchange. `disconnectTimeout: 0` destroys the
  * socket straight away; the default waits 2s for the server to close its side.
  */
-const checkRedis = async (connection: string): Promise<boolean> => {
+const checkRedis = async (connection: string): Promise<Outcome> => {
   const client = new Redis(connection, {
     lazyConnect: true,
     connectTimeout: TIMEOUT_MS,
@@ -73,9 +75,10 @@ const checkRedis = async (connection: string): Promise<boolean> => {
       TIMEOUT_MS,
       client.connect().then(() => client.ping()),
     );
-    return true;
-  } catch {
-    return false;
+    return "true";
+  } catch (error) {
+    // Our deadline, or ioredis's own connectTimeout.
+    return /timed out|ETIMEDOUT/i.test(String(error)) ? "timeout" : "false";
   } finally {
     client.disconnect();
   }
@@ -96,7 +99,7 @@ export const cacheConnection = async (config: Config): Promise<HealthCheck> => {
   const isRedis = config.cache_connection.toLowerCase().startsWith("redis://");
   const isMemcached = config.cache_connection.toLowerCase().startsWith("memcached://");
 
-  let result: boolean;
+  let result: Outcome;
   if (isRedis) {
     result = await checkRedis(config.cache_connection);
   } else if (isMemcached) {
@@ -113,9 +116,14 @@ export const cacheConnection = async (config: Config): Promise<HealthCheck> => {
 
   return {
     componentName: "cache_connection",
-    status: result ? Status.pass : Status.fail,
-    message: result ? "Cache connection successful" : "Cache connection failed",
-    value: result ? "true" : "false",
+    status: result === "true" ? Status.pass : Status.fail,
+    message:
+      result === "true"
+        ? "Cache connection successful"
+        : result === "timeout"
+          ? "Cache connection timed out"
+          : "Cache connection failed",
+    value: result,
     time: Date.now() - start,
   };
 };
