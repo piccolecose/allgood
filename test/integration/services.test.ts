@@ -92,7 +92,7 @@ describe.each([
     const before = sockets();
 
     const started = Date.now();
-    const { status } = await check({
+    const { status, body } = await check({
       cache_connection: `${new URL(url).protocol}//127.0.0.1:${port}`,
       ...only({ cache_connection: true }),
     });
@@ -102,6 +102,7 @@ describe.each([
     silent.close();
 
     expect(status).toBe(503);
+    expect(body.results.cache_connection.value).toBe("timeout");
     expect(took).toBeLessThan(6000);
     expect(leftover).toBeLessThanOrEqual(0);
   });

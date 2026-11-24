@@ -121,6 +121,17 @@ describe("cache", () => {
     });
   });
 
+  it("reports a Redis timeout separately from a refused connection", async () => {
+    mockRedisInstance.connect.mockRejectedValue(new Error("connect ETIMEDOUT"));
+
+    const result = await cacheConnection({
+      cache_connection: "redis://localhost:6379",
+      checks: { cache_connection: true },
+    });
+
+    expect(result).toMatchObject({ status: Status.fail, message: "Cache connection timed out", value: "timeout" });
+  });
+
   it("should fail when the server answers with something other than VERSION", async () => {
     const { url, server } = await memcachedServer("ERROR\r\n");
 
