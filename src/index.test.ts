@@ -79,3 +79,11 @@ describe("createHealthCheck config", () => {
     expect(Object.keys((await res.json()).results).sort()).toEqual(["cpu_usage", "memory_usage"]);
   });
 });
+
+describe("createHealthCheck with an unsupported framework", () => {
+  it("throws an Unsupported framework error", () => {
+    const handler = createHealthCheck(config) as (req: unknown) => unknown;
+
+    expect(() => handler({})).toThrow("Unsupported framework");
+  });
+});
