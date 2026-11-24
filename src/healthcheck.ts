@@ -22,7 +22,7 @@ export const healthcheckHandler = async (headers: Record<string, string | undefi
   const results: Record<string, HealthCheck> = {};
 
   const checkPromises = Object.entries(config.checks)
-    .filter(([_, enabled]) => enabled)
+    .filter(([, enabled]) => enabled)
     .map(async ([checkName]) => {
       if (checks[checkName]) {
         results[checkName] = await checks[checkName](config);
