@@ -27,7 +27,9 @@
     "build:esm": "tsc --project tsconfig.esm.json",
     "check": "biome check --write",
     "workflow:check": "biome check",
+    "lint": "oxlint --deny-warnings src test",
     "test": "jest",
+    "test:coverage": "jest --coverage",
     "test:integration": "jest --config jest.integration.config.js --runInBand",
     "typecheck": "tsc -p tsconfig.test.json"
   },
@@ -45,6 +47,7 @@
     "fastify": "^5.12.5",
     "hono": "^4.13.19",
     "jest": "^30.5.2",
+    "oxlint": "1.94.0",
     "ts-jest": "^29.4.14",
     "ts-node": "^10.9.2",
     "typescript": "5.9.3"

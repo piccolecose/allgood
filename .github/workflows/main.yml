@@ -17,9 +17,14 @@ jobs:
 
       - run: pnpm install
       - run: pnpm run workflow:check
+      - run: pnpm run lint
       - run: pnpm run typecheck
       - run: pnpm run build
-      - run: pnpm run test
+      # Fails below the line threshold in jest.config.js.
+      - run: pnpm run test:coverage
+      - name: Coverage summary
+        if: always() && hashFiles('coverage/coverage-summary.json') != ''
+        run: jq -r '.total | "## Coverage\n\n| Lines | Branches | Functions | Statements |\n| --- | --- | --- | --- |\n| \(.lines.pct)% | \(.branches.pct)% | \(.functions.pct)% | \(.statements.pct)% |"' coverage/coverage-summary.json | tee -a "$GITHUB_STEP_SUMMARY"
 
   integration:
     runs-on: ubuntu-latest
