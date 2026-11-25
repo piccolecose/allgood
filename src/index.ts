@@ -11,6 +11,7 @@ import { isExpress, isExpressResponse, isFastify, isFastifyReply, isHono, isWebR
 export interface Config {
   db_connection?: string; // the database connection string
   cache_connection?: string; //redis or memcache
+  dynamodb_table?: string; // the DynamoDB table to describe
   checks: {
     db_connection?: boolean;
     db_migrations?: boolean;
@@ -19,6 +20,7 @@ export interface Config {
     memory_usage?: boolean;
     outbound_internet?: boolean;
     cpu_usage?: boolean;
+    dynamodb?: boolean;
   };
 }
 
@@ -31,6 +33,7 @@ const defaultConfig = {
     memory_usage: true,
     outbound_internet: true,
     cpu_usage: true,
+    dynamodb: false,
   },
 };
 

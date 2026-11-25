@@ -2,6 +2,7 @@ import { cacheConnection } from "./checks/cache.js";
 import { cpuCheck } from "./checks/cpu.js";
 import { dbConnection } from "./checks/db.js";
 import { disk } from "./checks/disk.js";
+import { dynamodbCheck } from "./checks/dynamodb.js";
 import { egress } from "./checks/egress.js";
 import { memoryCheck } from "./checks/memory.js";
 import type { CheckRegistry, HealthCheck } from "./checks/types.js";
@@ -15,6 +16,7 @@ const checks: CheckRegistry = {
   cache_connection: cacheConnection,
   db_connection: dbConnection,
   cpu_usage: cpuCheck,
+  dynamodb: dynamodbCheck,
 };
 
 export const healthcheckHandler = async (headers: Record<string, string | undefined>, config: Config) => {
