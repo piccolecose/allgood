@@ -80,6 +80,8 @@ export const GET = ({ request }) => healthCheck(request); // SvelteKit
 | `cache_connection` | string | — | `redis://…` or `memcached://…`. Required when `checks.cache_connection` is on |
 | `checks.db_connection` | boolean | `false` | Runs `SELECT 1` |
 | `checks.cache_connection` | boolean | `false` | Redis `PING`, or memcached `version` |
+| `dynamodb_table` | string | — | Table name. Required when `checks.dynamodb` is on. Region and credentials come from the AWS SDK default chain |
+| `checks.dynamodb` | boolean | `false` | `DescribeTable`: `ACTIVE` passes, `UPDATING` warns, anything else fails. Needs `@aws-sdk/client-dynamodb` installed |
 | `checks.disk_space` | boolean | `true` | Fails under 1 GB free |
 | `checks.memory_usage` | boolean | `true` | Fails above 80% of the V8 heap limit |
 | `checks.cpu_usage` | boolean | `true` | Fails above 80%. Takes about a second to sample |

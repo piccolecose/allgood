@@ -60,6 +60,9 @@ jobs:
       memcached:
         image: memcached:1.6
         ports: ["11219:11211"]
+      dynamodb:
+        image: amazon/dynamodb-local:latest
+        ports: ["8009:8000"]
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v6

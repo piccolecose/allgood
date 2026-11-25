@@ -63,7 +63,8 @@ const healthCheck = createHealthCheck({
     disk_space: true,
     memory_usage: true,
     outbound_internet: true,
-    cpu_usage: true
+    cpu_usage: true,
+    dynamodb: false
   },
 });
 
@@ -133,6 +134,18 @@ serve({
   port: PORT
 })
 ```
+
+### DynamoDB
+```sh
+pnpm add @aws-sdk/client-dynamodb
+```
+```js
+const healthCheck = createHealthCheck({
+  dynamodb_table: process.env.DYNAMODB_TABLE,
+  checks: { dynamodb: true },
+});
+```
+The check runs `DescribeTable`. Region, credentials and endpoint come from the AWS SDK default chain (`AWS_REGION`, `AWS_ENDPOINT_URL_DYNAMODB`, profiles, IAM roles).
 
 ### API
 Allgood will also return a JSON object with healthcheck information for programmatic usage.
@@ -217,7 +230,7 @@ Nope, add it anywhere you want.
 ## Development
 ```bash
 pnpm test                     # unit tests, no services needed
-podman compose up -d --wait   # Postgres, MySQL, Redis and Memcached
+podman compose up -d --wait   # Postgres, MySQL, Redis, Memcached and DynamoDB Local
 pnpm test:integration         # real services and real Express, Fastify and Hono servers
 ```
 
