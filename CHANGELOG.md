@@ -1,5 +1,11 @@
 # @joshghent/allgood
 
+## 1.2.0
+
+### Minor Changes
+
+- bca0668: Add an opt-in `dynamodb` check that runs `DescribeTable` on `dynamodb_table`, using the optional peer dependency `@aws-sdk/client-dynamodb`.
+
 ## 1.1.0
 
 ### Minor Changes
