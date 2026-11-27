@@ -37,7 +37,7 @@
   "license": "MIT",
   "devDependencies": {
     "@aws-sdk/client-dynamodb": "^3.1176.0",
-    "@biomejs/biome": "2.6.7",
+    "@biomejs/biome": "2.6.8",
     "@changesets/cli": "^3.0.3",
     "@total-typescript/tsconfig": "^1.0.4",
     "@types/express": "^5.0.6",
